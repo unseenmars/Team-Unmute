@@ -4,10 +4,16 @@ from cvzone.HandTrackingModule import HandDetector
 import numpy as np
 from keras.models import load_model
 import traceback
+import time
+
+import os
+from gtts import gTTS
+
+import pygame
 
 model = load_model('cnn8grps_rad1_model.h5')
 white = np.ones((400, 400), np.uint8) * 255
-cv2.imwrite("C:\\Users\\devansh raval\\PycharmProjects\\pythonProject\\white.jpg", white)
+cv2.imwrite("C:\\Users\\khema\\PycharmProjects\\Team-Unmute\\Sign-to-Text-App\\white.jpg", white)
 
 capture = cv2.VideoCapture(0)
 
@@ -19,6 +25,31 @@ step = 1
 flag = False
 suv = 0
 
+def text_to_speech(text):
+    tts = gTTS(text=text, lang='en')
+    tts.save("output.mp3")
+    mm="output.mp3"
+    # os.system("open output.mp3")
+    # if os.path.exists(mm):
+    #     os.system(f"open {mm}")
+    # Initialize pygame
+    pygame.init()
+
+    # Path to your audio file
+    audio_file_path = "output.mp3"
+
+    # Load the audio file
+    pygame.mixer.music.load(audio_file_path)
+
+    # Play the audio
+    time.sleep(7)
+    pygame.mixer.music.play()
+
+    # Wait for the audio to finish playing
+
+
+    # Quit pygame
+    pygame.quit()
 
 def distance(x, y):
     return math.sqrt(((x[0] - y[0]) ** 2) + ((x[1] - y[1]) ** 2))
@@ -32,6 +63,7 @@ bfh = 0
 dicttt=dict()
 count=0
 kok=[]
+finalStr = ""
 
 while True:
     try:
@@ -44,7 +76,7 @@ while True:
             hand = hands[0]
             x, y, w, h = hand['bbox']
             image = frame[y - offset:y + h + offset, x - offset:x + w + offset]
-            white = cv2.imread("C:\\Users\\devansh raval\\PycharmProjects\\pythonProject\\white.jpg")
+            white = cv2.imread("C:\\Users\\khema\\PycharmProjects\\Team-Unmute\\Sign-to-Text-App\\white.jpg")
             # img_final=img_final1=img_final2=0
             handz = hd2.findHands(image, draw=False, flipType=True)
             if handz:
@@ -495,7 +527,7 @@ while True:
 
                 if ch1== 'E' or 'Y' or 'B':
                     if (pts[4][0] < pts[5][0] ):
-                        ch1 = 'Next'
+                        ch1 = 'QQ'
 
                 if ch1== 'Next' or 'B' or 'C' or 'H' or 'F':
                     if (pts[0][0] > pts[8][0] and pts[0][0] > pts[12][0] and pts[0][0] > pts[16][0] and pts[0][0] > pts[20][0]) and pts[4][1]<pts[8][1] and pts[4][1]<pts[12][1] and pts[4][1]<pts[16][1] and pts[4][1]<pts[20][1]:
@@ -511,11 +543,24 @@ while True:
                     else:
                         dicttt[(ch1,ch2)] = 1
 
+
+                finalStr += str(ch1)
+                finalStr = "".join(sorted(set(finalStr), key=finalStr.index))
+
+
+
+                # text_to_speech("WIN")
+
+
                 frame = cv2.putText(frame, "Predicted " + str(ch1), (30, 80),
                                     cv2.FONT_HERSHEY_SIMPLEX,
                                     3, (0, 0, 255), 2, cv2.LINE_AA)
 
+
+
+
         cv2.imshow("frame", frame)
+        print("Final String:", finalStr)
         interrupt = cv2.waitKey(1)
         if interrupt & 0xFF == 27:
             # esc key

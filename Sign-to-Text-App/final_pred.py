@@ -8,6 +8,9 @@ import pyttsx3
 from keras.models import load_model
 from cvzone.HandTrackingModule import HandDetector
 from string import ascii_uppercase
+
+from matplotlib import pyplot as plt
+
 #import enchant
 #ddd=enchant.Dict("en-US")
 hd = HandDetector(maxHands=1)
@@ -126,24 +129,28 @@ class Application:
         try:
             ok, frame = self.vs.read()
             cv2image = cv2.flip(frame, 1)
-            hands = hd.findHands(cv2image, draw=False, flipType=True)
+            hands, _ = hd.findHands(cv2image, draw=True, flipType=False)
             cv2image_copy=np.array(cv2image)
             cv2image = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB)
             self.current_image = Image.fromarray(cv2image)
             imgtk = ImageTk.PhotoImage(image=self.current_image)
             self.panel.imgtk = imgtk
             self.panel.config(image=imgtk)
-
+            print("khem", hands)
             if hands:
                 # #print(" --------- lmlist=",hands[1])
                 hand = hands[0]
                 x, y, w, h = hand['bbox']
                 image = cv2image_copy[y - offset:y + h + offset, x - offset:x + w + offset]
+                # print("khem123", type(image), image)
+                # plt.imshow(image, cmap='gray')
+                # plt.show()
 
-                white = cv2.imread("C:\\Users\\devansh raval\\PycharmProjects\\pythonProject\\white.jpg")
+                white = cv2.imread("C:\\Users\\khema\\PycharmProjects\\Team-Unmute\\Sign-to-Text-App\\white.jpg")
                 # img_final=img_final1=img_final2=0
 
-                handz = hd2.findHands(image, draw=False, flipType=True)
+                handz, _ = hd.findHands(image, draw=True, flipType=False)
+                print("khem1", handz)
                 print(" ", self.ccc)
                 self.ccc += 1
                 if handz:
@@ -718,25 +725,25 @@ class Application:
             word=self.str[st+1:ed]
             self.word=word
             print("----------word = ",word)
-            #if len(word.strip())!=0:
-                #ddd.check(word)
-                #lenn = len(ddd.suggest(word))
-                #if lenn >= 4:
-                   # self.word4 = ddd.suggest(word)[3]
-
-                #if lenn >= 3:
-                    #self.word3 = ddd.suggest(word)[2]
-
-                #if lenn >= 2:
-                    #self.word2 = ddd.suggest(word)[1]
-
-                #if lenn >= 1:
-                   # self.word1 = ddd.suggest(word)[0]
-            #else:
-                #self.word1 = " "
-                #self.word2 = " "
-                #self.word3 = " "
-                #self.word4 = " "
+            # if len(word.strip())!=0:
+            #     ddd.check(word)
+            #     lenn = len(ddd.suggest(word))
+            #     if lenn >= 4:
+            #        self.word4 = ddd.suggest(word)[3]
+            #
+            #     if lenn >= 3:
+            #         self.word3 = ddd.suggest(word)[2]
+            #
+            #     if lenn >= 2:
+            #         self.word2 = ddd.suggest(word)[1]
+            #
+            #     if lenn >= 1:
+            #        self.word1 = ddd.suggest(word)[0]
+            # else:
+            #     self.word1 = " "
+            #     self.word2 = " "
+            #     self.word3 = " "
+            #     self.word4 = " "
 
 
     def destructor(self):
