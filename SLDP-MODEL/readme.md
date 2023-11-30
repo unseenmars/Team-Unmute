@@ -4,10 +4,6 @@
 
 - **YouTube Training Video**: Special thanks to the YouTube video for providing invaluable training and object detection instructions. The video can be viewed at [this link](https://www.youtube.com/watch?v=pDXdlXlaCco).
 
-## Starting Point
-
-- **GitHub Repository Template**: Our project is built upon the template from the GitHub repository: [SLDP-MODEL](https://github.com/itsvaibhavmishra/SLDP-MODEL) by itsvaibhavmishra.
-
 ## Project Plan
 
 ### Initial Steps
