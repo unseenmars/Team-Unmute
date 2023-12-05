@@ -1,13 +1,18 @@
 import cv2
 import numpy as np
-import tensorflow as tf
 from keras.models import load_model
 import mediapipe as mp
-from matplotlib import colors
+from gtts import gTTS
+import pygame
+import io
+import time
+
+# Initialize pygame mixer
+pygame.mixer.init()
 
 # Load your trained model
-model = load_model('action.h5')  # Replace with your model path
-actions = np.array(['hello', 'thanks', 'iloveyou'])
+model = load_model('actionsFinalFinal.h5')  # Replace with your model path
+actions = np.array(['Hello', 'How', 'You', 'Nice', 'Meet', 'All Done'])
 
 # Initialize MediaPipe Holistic
 mp_holistic = mp.solutions.holistic
@@ -59,7 +64,14 @@ def extract_keypoints(results):
     return np.concatenate([pose, face, lh, rh])
 
 
-colors = [(245,117,16), (117,245,16), (16,117,245)]
+colors = [
+  (245, 117, 16), # Orange
+  (117, 245, 16), # Lime
+  (16, 117, 245), # Blue
+  (245, 16, 117), # Pink
+  (117, 16, 245), # Purple
+  (16, 245, 117) # Aqua
+]
 def prob_viz(res, actions, input_frame, colors):
     output_frame = input_frame.copy()
     for num, prob in enumerate(res):
@@ -69,6 +81,15 @@ def prob_viz(res, actions, input_frame, colors):
 
     return output_frame
 
+# Function to play audio
+def play_audio(text):
+    tts = gTTS(text=text, lang='en')
+    mp3_fp = io.BytesIO()
+    tts.write_to_fp(mp3_fp)
+    mp3_fp.seek(0)
+    pygame.mixer.music.load(mp3_fp)
+    pygame.mixer.music.play()
+
 # Initialize Webcam
 cap = cv2.VideoCapture(0)
 
@@ -76,55 +97,50 @@ sequence = []
 sentence = []
 predictions = []
 threshold = 0.5
+last_action = None  # Track the last action
+cooldown = 0  # Cooldown for next prediction
 
 with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     while cap.isOpened():
-        # Read feed
         ret, frame = cap.read()
         if not ret:
             break
 
         # Make detections using MediaPipe Holistic
         image, results = mediapipe_detection(frame, holistic)
-
-        # Draw styled landmarks on the image
         draw_styled_landmarks(image, results)
+
+        # Cooldown countdown display
+        if cooldown > 0:
+            countdown_text = f"Next in: {cooldown}"
+            cv2.putText(image, countdown_text, (700, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cooldown -= 1
+            time.sleep(1)  # Sleep for 1 second
 
         # Extract keypoints from the results
         keypoints = extract_keypoints(results)
         sequence.append(keypoints)
         sequence = sequence[-30:]  # Adjust based on your model's input requirement
 
-        if len(sequence) == 30:
-            # Make prediction
+        if len(sequence) == 30 and cooldown <= 0:
             res = model.predict(np.expand_dims(sequence, axis=0))[0]
             predictions.append(np.argmax(res))
 
-            # 3. Visualization logic
+            # Visualization logic
             if np.unique(predictions[-10:])[0] == np.argmax(res):
                 if res[np.argmax(res)] > threshold:
-                    if len(sentence) > 0:
-                        if actions[np.argmax(res)] != sentence[-1]:
-                            sentence.append(actions[np.argmax(res)])
-                    else:
-                        sentence.append(actions[np.argmax(res)])
+                    action = actions[np.argmax(res)]
+                    if action != last_action:
+                        last_action = action
+                        # Play audio for the new action
+                        play_audio(action)
+                        cooldown = 2  # Set cooldown for next prediction
 
-            if len(sentence) > 5:
-                sentence = sentence[-5:]
-
-            # Visualize probabilities
-            print(colors)  # Add this before the cv2.rectangle call in prob_viz
             image = prob_viz(res, actions, image, colors)
-
-            # Display recognized sentence
             cv2.rectangle(image, (0, 0), (640, 40), (245, 117, 16), -1)
-            cv2.putText(image, ' '.join(sentence), (3, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(image, last_action, (3, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
-        # Show the image with OpenCV
         cv2.imshow('OpenCV Feed', image)
-
-        # Break gracefully
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
 
